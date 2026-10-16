@@ -1,6 +1,6 @@
 // Mis Cuentas: permite abrir la app sin internet.
 // Si cambias index.html, sube también este archivo cambiando el número de VERSION.
-const VERSION = "mis-cuentas-v1";
+const VERSION = "mis-cuentas-v2";
 const FILES = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -24,8 +24,9 @@ self.addEventListener("fetch", e => {
   // La app: primero intenta internet (para tener siempre la última versión) y si no hay, usa la guardada
   e.respondWith(
     fetch(req).then(res => {
-      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
-      return res;
+      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); return res; }
+      // Si la web no responde bien (por ejemplo, error 404), abre la versión guardada en el móvil
+      return caches.match(req).then(hit => hit || caches.match("index.html")).then(hit => hit || res);
     }).catch(() => caches.match(req).then(hit => hit || caches.match("index.html")))
   );
 });
